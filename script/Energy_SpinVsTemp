@@ -1,0 +1,52 @@
+path = pwd()
+
+include(path*"\\IsingModelChallenge\\src\\createArray.jl")
+include(path*"\\IsingModelChallenge\\src\\IterateEnergyArray.jl")
+include(path*"\\IsingModelChallenge\\src\\EnergyPerSpin.jl")
+
+
+#MonteCarloSweeps = 1
+global imageArray = []
+arrayType = "positive" # positive, negative, both
+#global plt
+#ENV["PYTHON"] = "C:\\Users\\swarn\\Anaconda3\\python.exe"
+ENV["MPLBACKEND"]="tkagg"
+
+using Pkg
+#Pkg.add("DataFrames")
+#Pkg.add("ImageMagick")
+#Pkg.add("Statistics")
+using PyCall
+using PyPlot
+using Random
+using Statistics
+
+pygui(true)
+plt = pyimport("matplotlib.pyplot")
+animation = pyimport("matplotlib.animation")
+np = pyimport("numpy")
+#plt.ion()
+#fig = plt.figure()
+global rows = 10
+global columns = 10
+Energy = 0
+temperature = 0.5 # initialize temperature
+MonteCarloSweeps = 1000
+
+imageArray = []
+
+global EnergyArray = fill(0, rows, columns)
+global arrayMeanEnergyVsTemp = []
+
+x = createArray(arrayType)
+EnergyVsTemp(x, plt, temperature)
+#println(arrayMeanEnergyVsTemp)
+
+TemperatureAxis = np.linspace(0.5, 5, length(arrayMeanEnergyVsTemp))
+plt.plot(TemperatureAxis, arrayMeanEnergyVsTemp ,"o", color="blue")
+plt.xlabel("Temperature")
+plt.ylabel("Energy per Spin")
+plt.xlim(0, 5)
+plt.ylim(-2, 0)
+plt.title("Energy per Spin vs Temperature")
+plt.show()

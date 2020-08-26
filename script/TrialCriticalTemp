@@ -1,0 +1,166 @@
+
+include("F:\\Julia\\Project\\src\\createArray.jl")
+include("F:\\Julia\\Project\\src\\generateData.jl")
+include("F:\\Julia\\Project\\src\\IterateEnergyArray.jl")
+include("F:\\Julia\\Project\\src\\Normalization.jl")
+include("F:\\Julia\\Project\\src\\ExactBetaMeasurement.jl")
+
+
+#MonteCarloSweeps = 1
+global imageArray = []
+global arrayTemp = []
+arrayType = "positive" # positive, negative, both
+#global plt
+#ENV["PYTHON"] = "C:\\Users\\swarn\\Anaconda3\\python.exe"
+ENV["MPLBACKEND"]="tkagg"
+
+using Pkg
+#Pkg.add("DataFrames")
+#Pkg.add("ImageMagick")
+#Pkg.add("Statistics")
+using PyCall
+using PyPlot
+using Random
+using Statistics
+
+pygui(true)
+plt = pyimport("matplotlib.pyplot")
+animation = pyimport("matplotlib.animation")
+np = pyimport("numpy")
+#plt.ion()
+global rows = 10
+global columns = 10
+Energy = 0
+temperature = 0.1 # initialize temperature
+MonteCarloSweeps = 1000
+
+imageArray = []
+global arrayNormalized = []
+global arrayMeanEnergy = []
+global arrayMeanMagnetizationVsTemp = []
+global arrayLog_Temp_Difference = []
+global arrayBetaValue = []
+global arrayBetaTemp = []
+global arrayCriticalTemp = []
+
+global logOf_M = []  #log(M)
+global logOf_TcMinusT = []  #log(Tc - T)
+
+
+global EnergyArray = fill(0, rows, columns)
+
+x = createArray(arrayType)
+MagnetizationVsTemp(x, plt, temperature, "TrialCriticalTemp") # calling func betaCalculation inside MagnetizationVsTemp
+
+deleteat!(arrayMeanMagnetizationVsTemp, length(arrayMeanMagnetizationVsTemp))
+println("Length of Mag:", length(arrayMeanMagnetizationVsTemp))
+
+deleteat!(arrayTemp, length(arrayTemp))
+
+println("Length of Temp:", length(arrayTemp))
+
+#println("Length of beta:", length(arrayBetaValue))
+
+#println("log(M):", logOf_M )
+println("Length of logOf_M:", length(logOf_M))
+#println("Log(Tc - T):", logOf_TcMinusT )
+println("Length of Log(Tc - T):", length(logOf_TcMinusT))
+
+println("Critical Temp:", arrayCriticalTemp)
+
+"""
+# Finds Max and Min value of element in array logOf_M
+max_log_M , index_max_M = findmax(logOf_M)
+min_log_M , index_min_M = findmin(logOf_M)
+
+println("Max of logOf_M:", max_log_M )
+println("Min of logOf_M:", min_log_M )
+
+# Finds Max & Min value of element in array logOf_M
+max_log_Tc_T , indexT = findmax(logOf_TcMinusT)
+min_log_Tc_T , indexT = findmin(logOf_TcMinusT)
+
+println("Max of Log(Tc - T):", max_log_Tc_T )
+println("Min of Log(Tc - T):", min_log_Tc_T )
+
+plt.plot(logOf_TcMinusT, logOf_M , ".")
+plt.xlabel("\$ log_{10}(T_{c} - T) \$")
+plt.ylabel("\$ log_{10}(M) \$")
+plt.xlim( (min_log_Tc_T - 0.15) ,  (max_log_Tc_T + 0.1) )
+plt.ylim(min_log_M  - 0.05 , max_log_M + 0.02)
+plt.title("log(M) vs log(\$ T_{C} - T \$)")
+plt.show() """
+
+
+
+function  GraphPlot(plt)
+
+    #fig, ax = plt.subplots(5,5)  # check in ExactBetaMeasurement.jl library, TrialbetaCalculation() function, check(length)
+    #println("firstBetaTrial:", length(firstBetaTrial))
+    #plt.title("Magnetization vs Temperature")
+    #plt.legend()
+    iCount = 1
+    title = ""
+    #plt.subplots_adjust(left=0.09, bottom=0.1, right=0.9, top=0.9, wspace=0.3, hspace=0.8)
+    #for i in 1:5
+        #for j in 1:5
+
+        while iCount <= length(logOf_M)
+
+            plt.figure()
+            #println("iCount:", iCount )
+            #println("i,j:", i, "::" ,j  )
+            println("Below are the values")
+            title = "\$T_c\$=" * string(arrayCriticalTemp[iCount])
+            plt.title(title)
+
+            m , b = np.polyfit(logOf_TcMinusT[iCount], logOf_M[iCount], 1 )
+            println("m:", m)
+            println("b:", b)
+            x = logOf_TcMinusT[iCount]
+            y = (m*x).+b #  y = mx + c
+            plt.plot(logOf_TcMinusT[iCount], logOf_M[iCount] ,".", color = "green")
+            plt.plot(x, y)
+            plt.ylabel("Log(M)")
+            plt.xlabel("\$ log(T_{c}-T) \$")
+
+            iCount += 1
+        end
+        #end
+    #end
+
+    plt.show()
+end
+
+
+function  GraphPlot1(plt)
+
+    iCount = 1
+    title = ""
+
+        while iCount <= length(logOf_M)
+
+            plt.figure()
+            println("Below are the values")
+            title = "\$T_c\$=" * string(arrayCriticalTemp[iCount])
+            plt.title(title)
+
+            coefficients = np.polyfit(logOf_TcMinusT[iCount], logOf_M[iCount], 2 )
+            poly = np.poly1d(coefficients)
+            y_new = poly(logOf_TcMinusT[iCount])
+
+            x = logOf_TcMinusT[iCount]
+            plt.plot(logOf_TcMinusT[iCount], logOf_M[iCount] ,".", color = "green")
+            plt.plot(x, y_new)
+            plt.ylabel("Log(M)")
+            plt.xlabel("\$ log(T_{c}-T) \$")
+
+            iCount += 1
+        end
+
+    plt.show()
+end
+
+
+GraphPlot1(plt)
+#GraphPlot(plt)
